@@ -45,7 +45,7 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
   const [state, setState] = useState<{
     mode: Mode;
     prevMode: Mode;
-    selectedRect: { x: number; y: number; width: number; height: number } | null;
+    selectedRect: { x: number; y: number; width: number; height: number; rotation: number } | null; // rotation を追加
     sliderValue: number;
     imageURL: string;
     isSliding: boolean;

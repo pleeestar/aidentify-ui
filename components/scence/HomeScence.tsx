@@ -1,4 +1,3 @@
-// components/scence/HomeScence.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -16,8 +15,8 @@ const ResultDisplay = dynamic(() => import('@/components/ResultDisplay'), { ssr:
 import { useAnalysisStore, getAnalysisStoreActions } from '@/stores/useAnalysisStore';
 
 export default function HomeScence() {
-  const textRef = useRef(null);
-  const iconRef = useRef(null);
+  const textRef = useRef<HTMLHeadingElement>(null); // 型を HTMLHeadingElement に指定
+  const iconRef = useRef<HTMLDivElement>(null); // 型を HTMLDivElement に指定
 
   console.log('HomeScence: Before useAnalysisStore');
   const file = useAnalysisStore((state) => state.file);

@@ -12,7 +12,7 @@ export default function KonvaStage({
   onRectChange,
 }: {
   imageUrl: string;
-  onRectChange: (rect: { x: number; y: number; width: number; height: number }) => void;
+  onRectChange: (rect: { x: number; y: number; width: number; height: number; rotation: number }) => void; // rotation を追加
 }) {
   const [image] = useImage(imageUrl);
   const [rect, setRect] = useState({ x: 0, y: 0, width: 100, height: 100, rotation: 0 });

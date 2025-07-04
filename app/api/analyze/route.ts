@@ -1,7 +1,15 @@
-//app/api/analyze/route.ts
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+
+// API ルートの設定
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // API ルートのボディサイズ制限を 10MB に設定
+    },
+  },
+};
 
 export async function POST(request: Request) {
   try {
@@ -15,13 +23,13 @@ export async function POST(request: Request) {
     // Log for debugging
     console.log('Received:', { file: file?.name, scene, mode, value, rect });
 
-    // Read local dummy image
+    // Read local(dummy) image
     const imagePath = path.join(process.cwd(), 'public', 'dummy.jpg');
     const imageBuffer = await fs.readFile(imagePath);
     const dummyImage = new Blob([imageBuffer], { type: 'image/jpeg' });
-    
+
     // Simulate danger value
-    const danger = Math.floor(Math.random() * 100); // Random danger value (0-100)
+    const danger = Math.floor(Math.random() * 100); // 0-100 のランダムな危険度
 
     // Create response with dummy image and danger header
     return new NextResponse(dummyImage, {

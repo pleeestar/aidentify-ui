@@ -1,4 +1,3 @@
-//PalletDisplay
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
@@ -19,10 +18,8 @@ export default function PalletDisplay() {
   const [selectedScene, setSelectedScene] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // ZustandのsetSceneメソッドを取得
   const setScene = useAnalysisStore((state) => state.setScene);
 
-  // PalletDisplayがクリックされたときのアニメーション
   const handleSelfClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isActive && !isAnimating) {
@@ -34,11 +31,9 @@ export default function PalletDisplay() {
         ease: 'power2.out',
         onComplete: () => setIsAnimating(false),
       });
-      // z-indexを上げる
       if (containerRef.current) {
-        containerRef.current.style.zIndex = '20'; // LastRecordDisplayより高く
+        containerRef.current.style.zIndex = '20';
       }
-      // Pallet文字を小さく
       if (palletTextRef.current) {
         gsap.to(palletTextRef.current, {
           fontSize: '1.75rem',
@@ -46,7 +41,6 @@ export default function PalletDisplay() {
           ease: 'power2.out',
         });
       }
-      // / 12を非表示
       if (palletSuffixRef.current) {
         gsap.to(palletSuffixRef.current, {
           opacity: 0,
@@ -54,7 +48,6 @@ export default function PalletDisplay() {
           ease: 'power2.out',
         });
       }
-      // シーン数を「12シーン」に変更し下に移動
       if (sceneCountRef.current) {
         sceneCountRef.current.textContent = '12シーン';
         gsap.to(sceneCountRef.current, {
@@ -64,7 +57,6 @@ export default function PalletDisplay() {
           ease: 'power2.out',
         });
       }
-      // 「シーンを選択してください」をふわっと表示
       if (selectSceneRef.current) {
         gsap.to(selectSceneRef.current, {
           opacity: 1,
@@ -76,7 +68,6 @@ export default function PalletDisplay() {
     }
   };
 
-  // 外部クリックで下に戻す
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -89,13 +80,11 @@ export default function PalletDisplay() {
             ease: 'power2.out',
             onComplete: () => {
               setIsAnimating(false);
-              // z-indexを元に戻す
               if (containerRef.current) {
                 containerRef.current.style.zIndex = '10';
               }
             },
           });
-          // Pallet文字を大きく
           if (palletTextRef.current) {
             gsap.to(palletTextRef.current, {
               fontSize: '2rem',
@@ -103,7 +92,6 @@ export default function PalletDisplay() {
               ease: 'power2.out',
             });
           }
-          // / 12を半透明で表示
           if (palletSuffixRef.current) {
             gsap.to(palletSuffixRef.current, {
               opacity: 0.5,
@@ -111,7 +99,6 @@ export default function PalletDisplay() {
               ease: 'power2.out',
             });
           }
-          // シーン数を非表示
           if (sceneCountRef.current) {
             gsap.to(sceneCountRef.current, {
               y: 0,
@@ -120,7 +107,6 @@ export default function PalletDisplay() {
               ease: 'power2.out',
             });
           }
-          // 「シーンを選択してください」を小さくしてふわっと非表示
           if (selectSceneRef.current) {
             gsap.to(selectSceneRef.current, {
               opacity: 0,
@@ -137,11 +123,9 @@ export default function PalletDisplay() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isActive, isAnimating]);
 
-  // SceneButtonクリック時のアニメーションとZustandへの状態保存
   const handleSceneClick = (src: string, index: number, label: string) => {
-    // Zustandにシーンを保存
     setScene(label);
-    console.log("Scene selected:", label); // デバッグログ（必要に応じて削除）
+    console.log("Scene selected:", label);
 
     const button = sceneRefs.current[index];
     const final = finalRef.current;
@@ -158,7 +142,7 @@ export default function PalletDisplay() {
     clone.style.top = `${startRect.top - containerRect.top}px`;
     clone.style.left = `${startRect.left - containerRect.left}px`;
     clone.style.width = `${startRect.width}px`;
-    clone.style.height = `${startRect.height}px`;
+    clone.style.height = `${startRect.height}px`; // 修正済み（typo: .clone -> clone）
     clone.style.zIndex = '1000';
     clone.style.pointerEvents = 'none';
     container.appendChild(clone);
@@ -187,7 +171,7 @@ export default function PalletDisplay() {
       ref={containerRef}
       onClick={handleSelfClick}
       className="relative bg-gray-50 flex flex-col w-full rounded-t-3xl"
-      style={{ transform: 'translateY(0px)', zIndex: 10 }} // 初期z-indexを10に設定
+      style={{ transform: 'translateY(0px)', zIndex: 10 }}
     >
       <div className="text-left m-5 mt-4" style={{ fontFamily: 'var(--font-inter)' }}>
         <h1 ref={palletTextRef} className="text-[2rem] font-[900] text-[#222] inline">
@@ -244,7 +228,9 @@ export default function PalletDisplay() {
                 src={`/${text}.png`}
                 alt={`Scene ${index + 1}`}
                 onClick={() => handleSceneClick(`/${text}.png`, index, text)}
-                ref={(el) => (sceneRefs.current[index] = el)}
+                ref={(el: HTMLButtonElement | null) => {
+                  sceneRefs.current[index] = el;
+                }}
                 ImageText={text}
               />
             ))}
