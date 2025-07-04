@@ -183,7 +183,7 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
     formData.append('mode', mode);
 
     if (mode === 'controller') {
-      formData.append('value', sliderValue.toString());
+      formData.append('risk_level', sliderValue.toString());
     } else if (mode === 'crop' && cropRect) {
       formData.append('rect', JSON.stringify(cropRect));
     }
