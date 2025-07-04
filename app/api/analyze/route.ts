@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 // Python AIサーバーのエンドポイント
-const AI_SERVER_URL = 'https://rein0421-aidentify.hf.space';
+const AI_SERVER_URL = 'https://rein0421-aidentify.hf.space/analyze';
 // デバッグ用のダミーレスポンスを有効化するかどうか
 const USE_DUMMY_RESPONSE = false;
 // テスト用のダミーレスポンスの種類
