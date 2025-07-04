@@ -1,7 +1,9 @@
+// path: /components/ScenceButton.tsx
+
 'use client';
 import Image from 'next/image';
 import { forwardRef } from 'react';
-//SceneButton.tsx
+
 interface SceneButtonProps {
   src: string;
   alt: string;

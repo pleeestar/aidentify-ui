@@ -1,4 +1,5 @@
-//KonvaStage
+// path: /components/KonvaStage.tsx
+
 "use client";
 import { useRef, useEffect, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Rect } from "react-konva";

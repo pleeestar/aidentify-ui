@@ -1,3 +1,5 @@
+// path: /components/ConnectingScreen.tsx
+
 'use client';
 import { useEffect, useRef } from 'react';
 import BackgroundController from '@/components/BackgroundController';

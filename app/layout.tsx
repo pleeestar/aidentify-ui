@@ -1,4 +1,4 @@
-//layout.tsx
+// path: /app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";

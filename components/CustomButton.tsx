@@ -1,3 +1,5 @@
+// path: /components/CustomButton.tsx
+
 'use client';
 //CustomButton.tsx
 import React, { useRef } from 'react';

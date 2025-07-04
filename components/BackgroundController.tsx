@@ -1,4 +1,5 @@
-//BackgroundController.tsx
+// path: /components/BackgroundController.tsx
+
 'use client';
 import React, { ReactNode } from 'react';
 import styles from './BackgroundController.module.css';

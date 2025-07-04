@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+
+// Python AIサーバーのエンドポイント（環境変数から取得）
+const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://localhost:8000/analyze';
 
 // API ルートの設定
 export const config = {
@@ -13,6 +14,7 @@ export const config = {
 
 export async function POST(request: Request) {
   try {
+    // リクエストからFormDataを取得
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const scene = formData.get('scene') as string;
@@ -20,26 +22,49 @@ export async function POST(request: Request) {
     const value = formData.get('value') as string | null;
     const rect = formData.get('rect') as string | null;
 
-    // Log for debugging
-    console.log('Received:', { file: file?.name, scene, mode, value, rect });
+    // デバッグ用ログ
+    console.log('受信データ:', { file: file?.name, scene, mode, value, rect });
 
-    // Read local(dummy) image
-    const imagePath = path.join(process.cwd(), 'public', 'dummy.jpg');
-    const imageBuffer = await fs.readFile(imagePath);
-    const dummyImage = new Blob([imageBuffer], { type: 'image/jpeg' });
+    // 必須フィールドのバリデーション
+    if (!file || !scene || !mode) {
+      console.error('必須フィールドが不足:', { file: !!file, scene, mode });
+      return new NextResponse('必須フィールドが不足: file, scene, または mode', { status: 400 });
+    }
 
-    // Simulate danger value
-    const danger = Math.floor(Math.random() * 100); // 0-100 のランダムな危険度
-
-    // Create response with dummy image and danger header
-    return new NextResponse(dummyImage, {
+    // Python AIサーバーにリクエストを転送
+    const aiResponse = await fetch(AI_SERVER_URL, {
+      method: 'POST',
+      body: formData, // FormDataをそのまま転送
       headers: {
-        'Content-Type': 'image/jpeg',
-        'x-danger': danger.toString(),
+        // FormDataを使用する場合、Content-Typeは自動設定されるため明示的に設定しない
+      },
+    });
+
+    // レスポンスの確認
+    if (!aiResponse.ok) {
+      console.error('AIサーバーエラー:', {
+        status: aiResponse.status,
+        statusText: aiResponse.statusText,
+      });
+      return new NextResponse(`AIサーバーエラー: ${aiResponse.statusText}`, { status: aiResponse.status });
+    }
+
+    // AIサーバーからのレスポンスを取得
+    const blob = await aiResponse.blob();
+    const danger = aiResponse.headers.get('x-danger') || '0';
+
+    // デバッグ用ログ
+    console.log('AIサーバーレスポンス:', { blobType: blob.type, danger });
+
+    // クライアントにレスポンスを返す
+    return new NextResponse(blob, {
+      headers: {
+        'Content-Type': blob.type || 'image/jpeg',
+        'x-danger': danger,
       },
     });
   } catch (error) {
-    console.error('Error processing request:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('リクエスト処理エラー:', error);
+    return new NextResponse('内部サーバーエラー', { status: 500 });
   }
 }

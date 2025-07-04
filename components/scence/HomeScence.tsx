@@ -1,3 +1,5 @@
+// path: /components/scence/HomeScence.tsx
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';

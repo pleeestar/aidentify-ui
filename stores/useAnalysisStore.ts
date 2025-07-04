@@ -1,3 +1,5 @@
+// path: /stores/useAnalysisStore.ts
+
 'use client';
 
 import { create } from 'zustand';
