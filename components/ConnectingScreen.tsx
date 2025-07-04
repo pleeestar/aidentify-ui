@@ -1,4 +1,3 @@
-
 'use client';
 import { useEffect, useRef } from 'react';
 import BackgroundController from '@/components/BackgroundController';
@@ -84,24 +83,35 @@ export default function ConnectingScreen({ handleFirstScreenClick }: ConnectingS
     timerRef.current = setTimeout(() => {
       console.log('ConnectingScreen: Minimum duration (5s) elapsed at', new Date().toISOString());
       isMinDurationElapsed.current = true;
-      const { resultFile, danger } = useAnalysisStore.getState();
-      console.log('ConnectingScreen: State check after 5s', { resultFile: !!resultFile, danger });
-      if (resultFile && danger !== null) {
-        console.log('ConnectingScreen: Triggering handleFirstScreenClick after 5s');
+      const { resultFile, danger, isProcessing } = useAnalysisStore.getState();
+      console.log('ConnectingScreen: State check after 5s', {
+        resultFile: !!resultFile,
+        danger,
+        isProcessing
+      });
+      if (!isProcessing && resultFile && danger !== null) {
+        console.log('ConnectingScreen: Conditions met, calling handleFirstScreenClick');
         handleFirstScreenClick();
+      } else {
+        console.log('ConnectingScreen: Conditions not met', { isProcessing, resultFile: !!resultFile, danger });
       }
-    }, 5000);
+    }, 5000); // 5秒
 
     // APIレスポンスを定期的にチェック
     const checkCompletion = setInterval(() => {
-      const { resultFile, danger } = useAnalysisStore.getState();
-      console.log('ConnectingScreen: Interval check', { resultFile: !!resultFile, danger, isMinDurationElapsed: isMinDurationElapsed.current });
-      if (isMinDurationElapsed.current && resultFile && danger !== null) {
-        console.log('ConnectingScreen: Triggering handleFirstScreenClick from interval');
+      const { resultFile, danger, isProcessing } = useAnalysisStore.getState();
+      console.log('ConnectingScreen: Interval check at', new Date().toISOString(), {
+        resultFile: !!resultFile,
+        danger,
+        isProcessing,
+        isMinDurationElapsed: isMinDurationElapsed.current
+      });
+      if (isMinDurationElapsed.current && !isProcessing && resultFile && danger !== null) {
+        console.log('ConnectingScreen: Conditions met in interval, calling handleFirstScreenClick');
         clearInterval(checkCompletion);
         handleFirstScreenClick();
       }
-    }, 200);
+    }, 200); // 0.2秒ごとにチェック
 
     // クリーンアップ
     return () => {
@@ -117,15 +127,7 @@ export default function ConnectingScreen({ handleFirstScreenClick }: ConnectingS
       <BackgroundController>
         <div
           className="inset-0 flex flex-col items-center justify-center"
-          onClick={() => {
-            console.log('ConnectingScreen: Clicked at', new Date().toISOString());
-            if (isMinDurationElapsed.current) {
-              console.log('ConnectingScreen: Click triggering handleFirstScreenClick');
-              handleFirstScreenClick();
-            } else {
-              console.log('ConnectingScreen: Click ignored, minimum duration not elapsed');
-            }
-          }}
+          onClick={() => console.log('ConnectingScreen: Clicked, but not triggering handleFirstScreenClick')}
         >
           <img
             ref={logoRef}
