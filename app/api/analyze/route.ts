@@ -26,15 +26,27 @@ export async function POST(request: Request) {
     const scene = formData.get('scene') as string;
     const mode = formData.get('mode') as string;
     const value = formData.get('value') as string | null;
+    const risk_level = formData.get('risk_level') as string | null;
     const rect = formData.get('rect') as string | null;
 
     // デバッグ用ログ
-    console.log('受信データ:', { file: file?.name, scene, mode, value, rect });
+    console.log('受信データ:', { file: file?.name, scene, mode, value, risk_level, rect });
 
     // 必須フィールドのバリデーション
     if (!file || !scene || !mode) {
       console.error('必須フィールドが不足:', { file: !!file, scene, mode });
       return new NextResponse('必須フィールドが不足: file, scene, または mode', { status: 400 });
+    }
+
+    // 新しい FormData を作成して、必要なフィールドを確実に含める
+    const newFormData = new FormData();
+    newFormData.append('file', file);
+    newFormData.append('scene', scene);
+    newFormData.append('mode', mode);
+    newFormData.append('risk_level', risk_level || ''); // risk_level が null の場合、空文字列を送信
+    newFormData.append('rect', rect || '{}'); // rect が null の場合、空の JSON 文字列を送信
+    if (value) {
+      newFormData.append('value', value); // value が存在する場合のみ追加
     }
 
     // デバッグモード（ダミーレスポンス）が有効な場合
@@ -73,9 +85,9 @@ export async function POST(request: Request) {
     // Python AIサーバーにリクエストを転送
     const aiResponse = await fetch(AI_SERVER_URL, {
       method: 'POST',
-      body: formData, // FormDataをそのまま転送
+      body: newFormData, // 新しい FormData を使用
       headers: {
-        // FormDataを使用する場合、Content-Typeは自動設定されるため明示的に設定しない
+        // FormData を使用する場合、Content-Type は自動設定されるため明示的に設定しない
       },
     });
 
