@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
-// Python AIサーバーのエンドポイント（環境変数から取得）
-const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://localhost:8000/analyze';
+// Python AIサーバーのエンドポイント
+const AI_SERVER_URL = 'https://rein0421-aidentify.hf.space';
 // デバッグ用のダミーレスポンスを有効化するかどうか
-const USE_DUMMY_RESPONSE = process.env.USE_DUMMY_RESPONSE === 'true';
-// テスト用のダミーレスポンスの種類（例: 'fixed', 'random', 'error'）
-const DUMMY_RESPONSE_TYPE = process.env.DUMMY_RESPONSE_TYPE || 'random';
+const USE_DUMMY_RESPONSE = false;
+// テスト用のダミーレスポンスの種類
+const DUMMY_RESPONSE_TYPE: 'random' | 'fixed' | 'error' = 'random';
 
 // API ルートの設定
 export const config = {
@@ -68,20 +68,6 @@ export async function POST(request: Request) {
             },
           });
       }
-
-      // 元のダミー処理（ローカル画像読み込み、コメントアウト）
-      /*
-      const imagePath = path.join(process.cwd(), 'public', 'dummy.jpg');
-      const imageBuffer = await fs.readFile(imagePath);
-      const dummyImage = new Blob([imageBuffer], { type: 'image/jpeg' });
-      const danger = Math.floor(Math.random() * 100); // 0-100 のランダムな危険度
-      return new NextResponse(dummyImage, {
-        headers: {
-          'Content-Type': 'image/jpeg',
-          'x-danger': danger.toString(),
-        },
-      });
-      */
     }
 
     // Python AIサーバーにリクエストを転送
