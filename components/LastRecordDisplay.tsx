@@ -1,14 +1,30 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-
-const prevDanger = 140;
-const prevPrevDanger = 96;
+import { useAnalysisStore } from '@/stores/useAnalysisStore';
 
 export default function LastRecordDisplay() {
+  const [prevDanger, setPrevDanger] = useState<string>('--');
+  const [prevPrevDanger, setPrevPrevDanger] = useState<string>('--');
+  const danger = useAnalysisStore((state) => state.danger);
+
+  useEffect(() => {
+    // クライアント側でのみ localStorage を読み込む
+    const prev = localStorage.getItem('prevDanger') ?? '--';
+    const prevPrev = localStorage.getItem('prevPrevDanger') ?? '--';
+
+    // danger が更新されたとき、表示は localStorage の値をそのまま使用
+    setPrevDanger(prev);
+    setPrevPrevDanger(prevPrev);
+
+    // デバッグログ
+    console.log('LastRecordDisplay - danger:', danger, 'prevDanger:', prev, 'prevPrevDanger:', prevPrev);
+  }, [danger]);
+
   return (
     <div
-      className="relative w-[368px] h-[114px] rounded-xl overflow-hidden border-2 border-[#ffffff30]"
-      style={{ zIndex: 5 }} // PalletDisplayの初期z-index (10) より低く
+      className="relative w-[368px] h-[114px] rounded-xl overflow-hidden border-2 border-[#ffffff30] mx-auto"
+      style={{ zIndex: 5 }}
     >
       <Image
         src="/LastRecordDisplay/LastRecord-background.png"
@@ -23,13 +39,13 @@ export default function LastRecordDisplay() {
           <div className="text-center flex-1">
             <h2 className="text-[0.9rem] mb-1.5 font-[900] text-[#ffffffaa]">前回の危険度</h2>
             <span className="text-4xl font-bold" style={{ fontFamily: 'var(--font-ibm-plex-mono)' }}>
-              {prevDanger}
+              {prevDanger === '0' ? '--:--' : prevDanger}
             </span>
           </div>
           <div className="text-center flex-1">
             <h2 className="text-[0.9rem] mb-1.5 font-[900] text-[#ffffffaa]">前々回の危険度</h2>
             <span className="text-4xl font-bold" style={{ fontFamily: 'var(--font-ibm-plex-mono)' }}>
-              {prevPrevDanger}
+              {prevPrevDanger === '0' ? '--:--' : prevPrevDanger}
             </span>
           </div>
         </div>

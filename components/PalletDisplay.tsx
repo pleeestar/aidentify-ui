@@ -1,9 +1,11 @@
+//PalletDisplay
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
 import SceneButton from './SceneButton';
 import Image from 'next/image';
 import gsap from 'gsap';
+import { useAnalysisStore } from '@/stores/useAnalysisStore';
 
 export default function PalletDisplay() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -17,6 +19,9 @@ export default function PalletDisplay() {
   const [selectedScene, setSelectedScene] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // ZustandのsetSceneメソッドを取得
+  const setScene = useAnalysisStore((state) => state.setScene);
+
   // PalletDisplayがクリックされたときのアニメーション
   const handleSelfClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -24,7 +29,7 @@ export default function PalletDisplay() {
       setIsActive(true);
       setIsAnimating(true);
       gsap.to(containerRef.current, {
-        y: -200,
+        y: -230,
         duration: 0.4,
         ease: 'power2.out',
         onComplete: () => setIsAnimating(false),
@@ -132,8 +137,12 @@ export default function PalletDisplay() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isActive, isAnimating]);
 
-  // SceneButtonクリック時のアニメーション
-  const handleSceneClick = (src: string, index: number) => {
+  // SceneButtonクリック時のアニメーションとZustandへの状態保存
+  const handleSceneClick = (src: string, index: number, label: string) => {
+    // Zustandにシーンを保存
+    setScene(label);
+    console.log("Scene selected:", label); // デバッグログ（必要に応じて削除）
+
     const button = sceneRefs.current[index];
     const final = finalRef.current;
     const container = containerRef.current;
@@ -200,7 +209,7 @@ export default function PalletDisplay() {
         </p>
         <p
           ref={selectSceneRef}
-          className="text-[#222] mt-2 font-[900]"
+          className="text-[#222] font-[900]"
           style={{ opacity: 0, fontSize: '0.875rem' }}
         >
           シーンを選択してください
@@ -228,14 +237,15 @@ export default function PalletDisplay() {
 
       <div className="w-full">
         <div className="overflow-x-auto whitespace-nowrap pb-4">
-          <div className="flex space-x-4 m-6">
-            {['/image.png', '/image.png', '/image.png'].map((src, index) => (
+          <div className="flex space-x-4 mb-6 mx-6">
+            {['自然に注目', '町に注目', '人物に注目'].map((text, index) => (
               <SceneButton
                 key={index}
-                src={src}
+                src={`/${text}.png`}
                 alt={`Scene ${index + 1}`}
-                onClick={() => handleSceneClick(src, index)}
+                onClick={() => handleSceneClick(`/${text}.png`, index, text)}
                 ref={(el) => (sceneRefs.current[index] = el)}
+                ImageText={text}
               />
             ))}
           </div>

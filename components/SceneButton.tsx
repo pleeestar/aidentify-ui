@@ -1,16 +1,17 @@
 'use client';
 import Image from 'next/image';
 import { forwardRef } from 'react';
-
+//SceneButton.tsx
 interface SceneButtonProps {
   src: string;
   alt: string;
   onClick: () => void;
+  ImageText: string;
 }
 
 // forwardRefでrefをbuttonに渡す
 const SceneButton = forwardRef<HTMLButtonElement, SceneButtonProps>(
-  ({ src, alt, onClick }, ref) => {
+  ({ src, alt, onClick, ImageText }, ref) => {
     return (
       <button
         ref={ref}
@@ -30,7 +31,7 @@ const SceneButton = forwardRef<HTMLButtonElement, SceneButtonProps>(
           className="absolute"
         />
         <div className="absolute inset-0 bg-[#00000040] flex items-center justify-center">
-          <span className="text-white text-xl font-bold">自然に注目</span>
+          <span className="text-white text-xl font-bold">{ImageText}</span>
         </div>
       </button>
     );
