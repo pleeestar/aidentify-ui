@@ -15,15 +15,16 @@ const ResultDisplay = dynamic(() => import('@/components/ResultDisplay'), { ssr:
 import { useAnalysisStore, getAnalysisStoreActions } from '@/stores/useAnalysisStore';
 
 export default function HomeScence() {
-  const textRef = useRef<HTMLHeadingElement>(null); // 型を HTMLHeadingElement に指定
-  const iconRef = useRef<HTMLDivElement>(null); // 型を HTMLDivElement に指定
+  const textRef = useRef<HTMLHeadingElement>(null);
+  const iconRef = useRef<HTMLDivElement>(null);
 
   console.log('HomeScence: Before useAnalysisStore');
   const file = useAnalysisStore((state) => state.file);
   const resultFile = useAnalysisStore((state) => state.resultFile);
   const danger = useAnalysisStore((state) => state.danger);
   const scene = useAnalysisStore((state) => state.scene);
-  console.log('HomeScence: After useAnalysisStore', { file, resultFile, danger, scene });
+  const isProcessing = useAnalysisStore((state) => state.isProcessing);
+  console.log('HomeScence: After useAnalysisStore', { file, resultFile, danger, scene, isProcessing });
 
   const [showFirstScreen, setShowFirstScreen] = useState(false);
   const [showSecondScreen, setShowSecondScreen] = useState(false);
@@ -62,27 +63,30 @@ export default function HomeScence() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (resultFile && danger !== null && showFirstScreen) {
-      setShowFirstScreen(false);
-      setShowSecondScreen(true);
-    }
-  }, [resultFile, danger, showFirstScreen]);
-
   const handlePlay = () => {
+    console.log('HomeScence: handlePlay called');
+    const { setIsProcessing } = getAnalysisStoreActions();
+    setIsProcessing(true); // 処理開始をマーク
     setShowFirstScreen(true);
   };
 
-  const handleFirstScreenClick = () => {
+  const handleFirstScreenComplete = () => {
+    console.log('HomeScence: handleFirstScreenComplete called', { resultFile, danger });
+    const { setIsProcessing } = getAnalysisStoreActions();
     setShowFirstScreen(false);
-    setShowSecondScreen(true);
+    setIsProcessing(false); // 処理終了をマーク
+    if (resultFile && danger !== null) {
+      setShowSecondScreen(true);
+    }
   };
 
   const handleCloseSecondScreen = () => {
-    const { setFile, setScene } = getAnalysisStoreActions();
+    console.log('HomeScence: handleCloseSecondScreen called');
+    const { setFile, setScene, setResult } = getAnalysisStoreActions();
     setShowSecondScreen(false);
     setFile(null);
     setScene(null);
+    setResult(null, null); // 結果をリセット
   };
 
   return (
@@ -90,10 +94,11 @@ export default function HomeScence() {
       <h1 className="text-4xl font-bold mb-4 text-[#222] text-left w-full">＝ Home</h1>
       <img src="/aidentify.svg" alt="Aidentify #3.0.1" className="mb-4 w-full" />
 
-      {file && (
+      {file && !showFirstScreen && !showSecondScreen && (
         <ImageInteractionManager
           uploadedFile={file}
           onClose={() => {
+            console.log('HomeScence: ImageInteractionManager onClose');
             const { setFile } = getAnalysisStoreActions();
             setFile(null);
           }}
@@ -102,10 +107,10 @@ export default function HomeScence() {
       )}
 
       {showFirstScreen && (
-        <ConnectingScreen handleFirstScreenClick={handleFirstScreenClick} />
+        <ConnectingScreen handleFirstScreenClick={handleFirstScreenComplete} />
       )}
 
-      {showSecondScreen && danger !== null && resultFile && <ResultDisplay />}
+      {showSecondScreen && resultFile && danger !== null && <ResultDisplay />}
 
       <div className="flex items-center space-x-4 mb-8">
         <div ref={iconRef}>

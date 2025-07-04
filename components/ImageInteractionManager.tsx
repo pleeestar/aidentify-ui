@@ -1,11 +1,10 @@
-//ImageInteractionManager.tsx
 'use client';
 import { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import dynamic from "next/dynamic";
 import { useSwipeable } from "react-swipeable";
 import Image from 'next/image';
-import { useAnalysisStore } from '@/stores/useAnalysisStore';
+import { useAnalysisStore, getAnalysisStoreActions } from '@/stores/useAnalysisStore';
 import imageCompression from 'browser-image-compression';
 
 const KonvaStage = dynamic(() => import("@/components/KonvaStage"), { ssr: false });
@@ -45,7 +44,7 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
   const [state, setState] = useState<{
     mode: Mode;
     prevMode: Mode;
-    selectedRect: { x: number; y: number; width: number; height: number; rotation: number } | null; // rotation を追加
+    selectedRect: { x: number; y: number; width: number; height: number; rotation: number } | null;
     sliderValue: number;
     imageURL: string;
     isSliding: boolean;
@@ -164,20 +163,17 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
   });
 
   const handlePlay = async () => {
-    const { file, scene, mode, sliderValue, cropRect, setResult } = useAnalysisStore.getState();
+    const { file, scene, mode, sliderValue, cropRect, setResult, setIsProcessing } = useAnalysisStore.getState();
 
-    console.log('=== [DEBUG] handlePlay 発火 ===');
-    console.log('file:', file);
-    console.log('scene:', scene);
-    console.log('mode:', mode);
-    console.log('sliderValue:', sliderValue);
-    console.log('cropRect:', cropRect);
+    console.log('ImageInteractionManager: handlePlay called', { file: file?.name, scene, mode, sliderValue, cropRect });
 
     if (!file || !scene) {
-      console.warn('file または scene が未設定で送信できません');
+      console.warn('ImageInteractionManager: file or scene not set');
       alert('ファイルまたはシーンが選択されていません。');
       return;
     }
+
+    setIsProcessing(true); // 処理開始をマーク
 
     const formData = new FormData();
     formData.append('file', file);
@@ -190,8 +186,9 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
       formData.append('rect', JSON.stringify(cropRect));
     }
 
-    console.log('送信内容:', Array.from(formData.entries()));
+    console.log('ImageInteractionManager: Sending formData', Array.from(formData.entries()));
 
+    // ImageInteractionManager.tsx の handlePlay 内
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
@@ -199,8 +196,9 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
       });
 
       if (!res.ok) {
-        console.error('API request failed:', res.status, res.statusText);
+        console.error('ImageInteractionManager: API request failed', { status: res.status, statusText: res.statusText });
         alert(`分析に失敗しました: ${res.statusText}`);
+        setIsProcessing(false);
         return;
       }
 
@@ -208,17 +206,21 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
       const dangerHeader = res.headers.get('x-danger');
       const danger = dangerHeader ? Number(dangerHeader) : 0;
 
-      console.log('=== [DEBUG] API レスポンス ===');
-      console.log('dangerHeader:', dangerHeader, 'parsed danger:', danger);
+      console.log('ImageInteractionManager: API response', { dangerHeader, danger });
 
       const resultFile = new File([blob], 'result.jpg', { type: blob.type });
       setResult(resultFile, danger);
-      console.log('setResult called:', { resultFile: resultFile.name, danger });
+      setIsProcessing(false); // 成功時にも false に設定
+      console.log('ImageInteractionManager: setResult called', { resultFile: resultFile.name, danger });
 
-      if (onPlay) onPlay();
+      if (onPlay) {
+        console.log('ImageInteractionManager: Calling onPlay');
+        onPlay();
+      }
     } catch (error) {
-      console.error('Error during API request:', error);
+      console.error('ImageInteractionManager: Error during API request', error);
       alert('サーバーとの通信に失敗しました。もう一度お試しください。');
+      setIsProcessing(false);
     }
   };
 
@@ -293,14 +295,14 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
     const minY = Math.min(...corners.map(c => c.y));
     const maxY = Math.max(...corners.map(c => c.y));
 
-    console.log("Calculated Bounding Box:", { x1: minX, y1: minY, x2: maxX, y2: maxY });
+    console.log("ImageInteractionManager: Calculated Bounding Box", { x1: minX, y1: minY, x2: maxX, y2: maxY });
 
     return { x1: minX, y1: minY, x2: maxX, y2: maxY };
   };
 
   const isReady = !!uploadedFile && !!useAnalysisStore.getState().scene;
 
-  console.log("isReady:", isReady, "uploadedFile:", uploadedFile, "scene:", useAnalysisStore.getState().scene);
+  console.log("ImageInteractionManager: isReady", { isReady, uploadedFile: uploadedFile?.name, scene: useAnalysisStore.getState().scene });
 
   if (!uploadedFile) return null;
 
@@ -373,7 +375,7 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
               <KonvaStage
                 imageUrl={state.imageURL}
                 onRectChange={(rect) => {
-                  console.log("onRectChange called with:", rect); // デバッグログ
+                  console.log("ImageInteractionManager: onRectChange called", rect);
                   setState((prev) => ({ ...prev, selectedRect: rect }));
                 }}
               />
