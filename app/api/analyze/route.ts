@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Python AIサーバーのエンドポイント（環境変数から取得）
 const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://localhost:8000/analyze';
+// デバッグ用のダミーレスポンスを有効化するかどうか
+const USE_DUMMY_RESPONSE = process.env.USE_DUMMY_RESPONSE === 'true';
+// テスト用のダミーレスポンスの種類（例: 'fixed', 'random', 'error'）
+const DUMMY_RESPONSE_TYPE = process.env.DUMMY_RESPONSE_TYPE || 'random';
 
 // API ルートの設定
 export const config = {
@@ -29,6 +35,53 @@ export async function POST(request: Request) {
     if (!file || !scene || !mode) {
       console.error('必須フィールドが不足:', { file: !!file, scene, mode });
       return new NextResponse('必須フィールドが不足: file, scene, または mode', { status: 400 });
+    }
+
+    // デバッグモード（ダミーレスポンス）が有効な場合
+    if (USE_DUMMY_RESPONSE) {
+      console.log(`デバッグモード: ダミーレスポンスを使用 (タイプ: ${DUMMY_RESPONSE_TYPE})`);
+
+      // テスト用ダミーレスポンスのロジック
+      switch (DUMMY_RESPONSE_TYPE) {
+        case 'fixed':
+          // 固定値のダミーレスポンス（テスト用: 危険度50）
+          return new NextResponse(new Blob(['fixed dummy image content'], { type: 'image/jpeg' }), {
+            headers: {
+              'Content-Type': 'image/jpeg',
+              'x-danger': '50',
+            },
+          });
+
+        case 'error':
+          // エラーシナリオのダミーレスポンス（テスト用: 400エラー）
+          return new NextResponse('テスト用エラー: 無効なリクエスト', { status: 400 });
+
+        case 'random':
+        default:
+          // ランダムな危険度のダミーレスポンス（デフォルト）
+          const dummyImage = new Blob(['random dummy image content'], { type: 'image/jpeg' });
+          const danger = Math.floor(Math.random() * 100);
+          return new NextResponse(dummyImage, {
+            headers: {
+              'Content-Type': 'image/jpeg',
+              'x-danger': danger.toString(),
+            },
+          });
+      }
+
+      // 元のダミー処理（ローカル画像読み込み、コメントアウト）
+      /*
+      const imagePath = path.join(process.cwd(), 'public', 'dummy.jpg');
+      const imageBuffer = await fs.readFile(imagePath);
+      const dummyImage = new Blob([imageBuffer], { type: 'image/jpeg' });
+      const danger = Math.floor(Math.random() * 100); // 0-100 のランダムな危険度
+      return new NextResponse(dummyImage, {
+        headers: {
+          'Content-Type': 'image/jpeg',
+          'x-danger': danger.toString(),
+        },
+      });
+      */
     }
 
     // Python AIサーバーにリクエストを転送
