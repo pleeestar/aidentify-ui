@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const risk_level = formData.get('risk_level') as string | null;
     const rect = formData.get('rect') as string | null;
 
-    // デバッグ用ログ
+    // デバッグ用ログ（受信データ）
     console.log('受信データ:', { file: file?.name, scene, mode, value, risk_level, rect });
 
     // 必須フィールドのバリデーション
@@ -43,11 +43,21 @@ export async function POST(request: Request) {
     newFormData.append('file', file);
     newFormData.append('scene', scene);
     newFormData.append('mode', mode);
-    newFormData.append('risk_level', risk_level || ''); // risk_level が null の場合、空文字列を送信
-    newFormData.append('rect', rect || '{}'); // rect が null の場合、空の JSON 文字列を送信
+    newFormData.append('risk_level', risk_level || '50'); // risk_level が null の場合、デフォルトで "50"
+    newFormData.append('rect', rect || '{}'); // rect が null の場合、空の JSON 文字列
     if (value) {
       newFormData.append('value', value); // value が存在する場合のみ追加
     }
+
+    // 送信データのログ出力
+    console.log('送信データ:', {
+      file: file?.name,
+      scene,
+      mode,
+      risk_level: risk_level || '50',
+      rect: rect || '{}',
+      value,
+    });
 
     // デバッグモード（ダミーレスポンス）が有効な場合
     if (USE_DUMMY_RESPONSE) {
