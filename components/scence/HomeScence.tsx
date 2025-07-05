@@ -1,5 +1,3 @@
-// path: /components/scence/HomeScence.tsx
-
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -19,14 +17,10 @@ import { useAnalysisStore, getAnalysisStoreActions } from '@/stores/useAnalysisS
 export default function HomeScence() {
   const textRef = useRef<HTMLHeadingElement>(null);
   const iconRef = useRef<HTMLDivElement>(null);
-  const connectingScreenRef = useRef<HTMLDivElement>(null); // ConnectingScreen用のRef
+  const connectingScreenRef = useRef<HTMLDivElement>(null);
 
   console.log('HomeScence: useAnalysisStoreの前');
-  const file = useAnalysisStore((state) => state.file);
-  const resultFile = useAnalysisStore((state) => state.resultFile);
-  const danger = useAnalysisStore((state) => state.danger);
-  const scene = useAnalysisStore((state) => state.scene);
-  const isProcessing = useAnalysisStore((state) => state.isProcessing);
+  const { file, resultFile, danger, scene, isProcessing } = useAnalysisStore();
   console.log('HomeScence: useAnalysisStoreの後', { file, resultFile, danger, scene, isProcessing });
 
   const [showFirstScreen, setShowFirstScreen] = useState(false);
@@ -86,18 +80,30 @@ export default function HomeScence() {
     }
   }, [showFirstScreen]);
 
+  // 状態監視: resultFileとdangerが設定され、isProcessingがfalseの場合に画面遷移
+  useEffect(() => {
+    console.log('HomeScence: useEffect 実行', { resultFile, danger, isProcessing });
+    if (resultFile && danger !== null && isProcessing === false) {
+      console.log('HomeScence: handleFirstScreenComplete 呼び出し (useEffect)', { resultFile, danger });
+      handleFirstScreenComplete();
+    }
+  }, [resultFile, danger, isProcessing]);
+
   const handlePlay = () => {
     console.log('HomeScence: handlePlay 呼び出し');
-    setShowFirstScreen(true); // ConnectingScreenをopacityアニメーションで表示
+    setShowFirstScreen(true);
   };
 
   const handleFirstScreenComplete = () => {
+    // 最新の状態を直接取得
+    const { resultFile, danger } = useAnalysisStore.getState();
     console.log('HomeScence: handleFirstScreenComplete 呼び出し', { resultFile, danger });
-    setShowFirstScreen(false); // ConnectingScreenを非表示
+
     if (resultFile && danger !== null) {
-      setShowSecondScreen(true); // ResultDisplayを表示
+      setShowFirstScreen(false);
+      setShowSecondScreen(true);
     } else {
-      console.warn('HomeScence: resultFileまたはdangerが未設定、HomeScenceに留まる');
+      console.warn('HomeScence: resultFileまたはdangerが未設定、HomeScenceに留まる', { resultFile, danger });
       alert('分析結果を取得できませんでした。もう一度お試しください。');
     }
   };
@@ -108,7 +114,7 @@ export default function HomeScence() {
     setShowSecondScreen(false);
     setFile(null);
     setScene(null);
-    setResult(null, null); // 結果をリセット
+    setResult(null, null);
   };
 
   return (
@@ -131,7 +137,7 @@ export default function HomeScence() {
               setFile(null);
             }}
             onPlay={handlePlay}
-            onComplete={handleFirstScreenComplete} // 新たに追加
+            onComplete={handleFirstScreenComplete}
           />
         </div>
       )}
