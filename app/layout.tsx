@@ -27,9 +27,17 @@ const inter = Inter({
   weight: ["400", "700"], // Specify the desired weights
 });
 
+
 export const metadata: Metadata = {
-  // Your metadata
-};
+  title: 'My App',
+  description: 'PWA Sample',
+  manifest: '/manifest.json',
+  themeColor: '#000000',
+  icons: {
+    icon: '/logo-192x192.png',
+    apple: '/logo-192x192.png',
+  },
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
