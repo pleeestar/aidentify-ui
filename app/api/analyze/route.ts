@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 
 // Python AIサーバーのエンドポイント
 const AI_SERVER_URL = 'https://rein0421-aidentify.hf.space/analyze';
 // デバッグ用のダミーレスポンスを有効化するかどうか
-const USE_DUMMY_RESPONSE = true;
+const USE_DUMMY_RESPONSE = false;
 // テスト用のダミーレスポンスの種類
 const DUMMY_RESPONSE_TYPE: 'random' | 'fixed' | 'error' = 'random';
 
@@ -37,21 +35,41 @@ export async function POST(request: Request) {
       return new NextResponse('必須フィールドが不足: file, scene, または mode', { status: 400 });
     }
 
-    // 新しい FormData を作成して、必要なフィールドを確実に含める
+    // rectをパースしてx1, y1, x2, y2を抽出
+    let x1 = '0';
+    let y1 = '0';
+    let x2 = '0';
+    let y2 = '0';
+    if (rect) {
+      try {
+        const rectObj = JSON.parse(rect);
+        x1 = rectObj.x1?.toString() || '0';
+        y1 = rectObj.y1?.toString() || '0';
+        x2 = rectObj.x2?.toString() || '0';
+        y2 = rectObj.y2?.toString() || '0';
+      } catch (e) {
+        console.error('rectのパースエラー:', e);
+        return new NextResponse('無効なrectフォーマット', { status: 400 });
+      }
+    }
+
+    // 新しい FormData を作成して、Pythonサーバーに必要なフィールドのみ含める
     const newFormData = new FormData();
-    newFormData.append('file', file);
-    newFormData.append('scene', scene);
-    newFormData.append('mode', mode);
+    newFormData.append('image', file);
     newFormData.append('risk_level', risk_level || '50');
-    newFormData.append('rect', rect || '{}'); // rect が null の場合、空の JSON 文字列
+    newFormData.append('x1', x1);
+    newFormData.append('y1', y1);
+    newFormData.append('x2', x2);
+    newFormData.append('y2', y2);
 
     // 送信データのログ出力
     console.log('送信データ:', {
       file: file?.name,
-      scene,
-      mode,
       risk_level: risk_level || '50',
-      rect: rect || '{}',
+      x1,
+      y1,
+      x2,
+      y2,
     });
 
     // デバッグモード（ダミーレスポンス）が有効な場合
@@ -90,10 +108,7 @@ export async function POST(request: Request) {
     // Python AIサーバーにリクエストを転送
     const aiResponse = await fetch(AI_SERVER_URL, {
       method: 'POST',
-      body: newFormData, // 新しい FormData を使用
-      headers: {
-        // FormData を使用する場合、Content-Type は自動設定されるため明示的に設定しない
-      },
+      body: newFormData,
     });
 
     // レスポンスの確認
