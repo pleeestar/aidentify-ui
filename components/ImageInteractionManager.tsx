@@ -17,6 +17,7 @@ interface ImageInteractionManagerProps {
   uploadedFile: File | null;
   onClose: () => void;
   onPlay?: () => void;
+  onComplete: () => void; // 新たに追加
 }
 
 const modes: Mode[] = ["crop", "controller", "auto"];
@@ -35,7 +36,7 @@ const modeIcons: Record<Mode, string> = {
   auto: "/autoIcon.svg",
 };
 
-export default function ImageInteractionManager({ uploadedFile, onClose, onPlay }: ImageInteractionManagerProps) {
+export default function ImageInteractionManager({ uploadedFile, onClose, onPlay, onComplete }: ImageInteractionManagerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const modeNameRef = useRef<HTMLDivElement>(null);
@@ -167,15 +168,20 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
   const handlePlay = async () => {
     const { file, scene, mode, sliderValue, cropRect, setResult, setIsProcessing } = useAnalysisStore.getState();
 
-    console.log('ImageInteractionManager: handlePlay called', { file: file?.name, scene, mode, sliderValue, cropRect });
+    console.log('ImageInteractionManager: handlePlay 呼び出し', { file: file?.name, scene, mode, sliderValue, cropRect });
 
     if (!file || !scene) {
-      console.warn('ImageInteractionManager: file or scene not set');
+      console.warn('ImageInteractionManager: ファイルまたはシーンが未設定');
       alert('ファイルまたはシーンが選択されていません。');
       return;
     }
 
     setIsProcessing(true); // 処理開始をマーク
+    console.log('ImageInteractionManager: isProcessing を true に設定');
+    if (onPlay) {
+      console.log('ImageInteractionManager: onPlay 呼び出し');
+      onPlay();
+    }
 
     const formData = new FormData();
     formData.append('file', file);
@@ -188,19 +194,34 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
       formData.append('rect', JSON.stringify(cropRect));
     }
 
-    console.log('ImageInteractionManager: Sending formData', Array.from(formData.entries()));
+    console.log('ImageInteractionManager: formData 送信', Array.from(formData.entries()));
 
-    // ImageInteractionManager.tsx の handlePlay 内
+    // 5秒の最低待機時間を保証
+    const startTime = Date.now();
+    const minDisplayTime = 5000; // 5秒
+
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
       });
 
+      // APIレスポンスが返ってくるまでの時間を計算
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = minDisplayTime - elapsedTime;
+
+      // 5秒未満の場合は残りの時間待機
+      if (remainingTime > 0) {
+        console.log(`ImageInteractionManager: 5秒未満のため、${remainingTime}ms待機`);
+        await new Promise((resolve) => setTimeout(resolve, remainingTime));
+      }
+
       if (!res.ok) {
-        console.error('ImageInteractionManager: API request failed', { status: res.status, statusText: res.statusText });
+        console.error('ImageInteractionManager: API リクエスト失敗', { status: res.status, statusText: res.statusText });
         alert(`分析に失敗しました: ${res.statusText}`);
-        setIsProcessing(false);
+        setIsProcessing(false); // エラー時に処理状態をリセット
+        console.log('ImageInteractionManager: isProcessing を false に設定 (エラー)');
+        onComplete(); // エラーでも遷移
         return;
       }
 
@@ -208,21 +229,31 @@ export default function ImageInteractionManager({ uploadedFile, onClose, onPlay 
       const dangerHeader = res.headers.get('x-danger');
       const danger = dangerHeader ? Number(dangerHeader) : 0;
 
-      console.log('ImageInteractionManager: API response', { dangerHeader, danger });
+      console.log('ImageInteractionManager: API レスポンス', { dangerHeader, danger });
 
       const resultFile = new File([blob], 'result.jpg', { type: blob.type });
       setResult(resultFile, danger);
-      setIsProcessing(false); // 成功時にも false に設定
-      console.log('ImageInteractionManager: setResult called', { resultFile: resultFile.name, danger });
+      console.log('ImageInteractionManager: setResult 呼び出し', { resultFile: resultFile.name, danger });
 
-      if (onPlay) {
-        console.log('ImageInteractionManager: Calling onPlay');
-        onPlay();
-      }
+      setIsProcessing(false); // 成功時に処理状態をリセット
+      console.log('ImageInteractionManager: isProcessing を false に設定 (成功)');
+
+      onComplete(); // 成功時に遷移
     } catch (error) {
-      console.error('ImageInteractionManager: Error during API request', error);
+      console.error('ImageInteractionManager: API リクエスト中のエラー', error);
       alert('サーバーとの通信に失敗しました。もう一度お試しください。');
-      setIsProcessing(false);
+
+      // エラー時も5秒待機を保証
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = minDisplayTime - elapsedTime;
+      if (remainingTime > 0) {
+        console.log(`ImageInteractionManager: エラー時、${remainingTime}ms待機`);
+        await new Promise((resolve) => setTimeout(resolve, remainingTime));
+      }
+
+      setIsProcessing(false); // 例外時に処理状態をリセット
+      console.log('ImageInteractionManager: isProcessing を false に設定 (例外)');
+      onComplete(); // エラーでも遷移
     }
   };
 

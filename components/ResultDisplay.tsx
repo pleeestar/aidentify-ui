@@ -6,7 +6,7 @@ import Image from 'next/image';
 import gsap from 'gsap';
 import { useAnalysisStore } from '@/stores/useAnalysisStore';
 
-export default function ResultDisplay() {
+export default function ResultDisplay({onClose}: { onClose: () => void }) {
   const { resultFile, danger } = useAnalysisStore();
   const [imageURL, setImageURL] = useState<string | null>(null);
   const [dangerValue, setDangerValue] = useState<string>('--');

@@ -3,9 +3,12 @@
 'use client';
 
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
-type Mode = "crop" | "controller" | "auto";
+// モードの型定義
+type Mode = 'crop' | 'controller' | 'auto';
 
+// ストアの型定義
 type AnalysisStore = {
   file: File | null;
   scene: string | null;
@@ -24,24 +27,32 @@ type AnalysisStore = {
   setIsProcessing: (isProcessing: boolean) => void;
 };
 
-export const useAnalysisStore = create<AnalysisStore>((set) => ({
-  file: null,
-  scene: null,
-  mode: "crop",
-  sliderValue: 50,
-  cropRect: null,
-  resultFile: null,
-  danger: null,
-  isProcessing: false,
-  setFile: (f) => set({ file: f }),
-  setScene: (s) => set({ scene: s }),
-  setMode: (m) => set({ mode: m }),
-  setSliderValue: (v) => set({ sliderValue: v }),
-  setCrop: (r) => set({ cropRect: r }),
-  setResult: (file, danger) => set({ resultFile: file, danger }),
-  setIsProcessing: (isProcessing) => set({ isProcessing }),
-}));
-
+// Zustandストアを作成し、Redux DevToolsを有効化
+export const useAnalysisStore = create<AnalysisStore>()(
+  devtools(
+    (set) => ({
+      file: null,
+      scene: null,
+      mode: 'crop',
+      sliderValue: 50,
+      cropRect: null,
+      resultFile: null,
+      danger: null,
+      isProcessing: false,
+      setFile: (f) => set({ file: f }),
+      setScene: (s) => set({ scene: s }),
+      setMode: (m) => set({ mode: m }),
+      setSliderValue: (v) => set({ sliderValue: v }),
+      setCrop: (r) => set({ cropRect: r }),
+      setResult: (file, danger) => set({ resultFile: file, danger }),
+      setIsProcessing: (isProcessing) => set({ isProcessing }),
+    }),
+    {
+      name: 'AnalysisStore', // Redux DevToolsでのストア名
+      enabled: process.env.NODE_ENV !== 'production', // 本番環境では無効化
+    }
+  )
+);
 export const getAnalysisStoreActions = () => ({
   setFile: useAnalysisStore.getState().setFile,
   setScene: useAnalysisStore.getState().setScene,

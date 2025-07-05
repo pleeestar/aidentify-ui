@@ -224,7 +224,7 @@ export default function PalletDisplay() {
       <div className="w-full">
         <div className="overflow-x-auto whitespace-nowrap pb-4">
           <div className="flex space-x-4 mb-6 mx-6">
-            {['自然に注目', '町に注目', '人物に注目'].map((text, index) => (
+            {['自然に注目', '観光地', 'Instaに上げる'].map((text, index) => (
               <SceneButton
                 key={index}
                 src={`/${text}.png`}

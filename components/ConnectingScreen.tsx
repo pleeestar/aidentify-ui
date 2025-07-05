@@ -1,27 +1,22 @@
 // path: /components/ConnectingScreen.tsx
 
 'use client';
+
 import { useEffect, useRef } from 'react';
 import BackgroundController from '@/components/BackgroundController';
 import Image from 'next/image';
 import { gsap } from 'gsap';
-import { useAnalysisStore } from '@/stores/useAnalysisStore';
 
-interface ConnectingScreenProps {
-  handleFirstScreenClick: () => void;
-}
-
-export default function ConnectingScreen({ handleFirstScreenClick }: ConnectingScreenProps) {
+export default function ConnectingScreen() {
   const loadingIconRef = useRef(null);
   const logoRef = useRef(null);
   const textRef = useRef(null);
   const subTextRef = useRef(null);
   const containerRef = useRef(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const isMinDurationElapsed = useRef(false);
 
+  // アニメーションの設定
   useEffect(() => {
-    console.log('ConnectingScreen: Mounted at', new Date().toISOString());
+    console.log('ConnectingScreen: マウント', new Date().toISOString());
 
     // コンテナのアニメーション（フェードインとスライドアップ）
     gsap.fromTo(
@@ -81,55 +76,19 @@ export default function ConnectingScreen({ handleFirstScreenClick }: ConnectingS
         2.55
       );
 
-    // 5秒の最小表示時間を設定
-    timerRef.current = setTimeout(() => {
-      console.log('ConnectingScreen: Minimum duration (5s) elapsed at', new Date().toISOString());
-      isMinDurationElapsed.current = true;
-      const { resultFile, danger, isProcessing } = useAnalysisStore.getState();
-      console.log('ConnectingScreen: State check after 5s', {
-        resultFile: !!resultFile,
-        danger,
-        isProcessing
-      });
-      if (!isProcessing && resultFile && danger !== null) {
-        console.log('ConnectingScreen: Conditions met, calling handleFirstScreenClick');
-        handleFirstScreenClick();
-      } else {
-        console.log('ConnectingScreen: Conditions not met', { isProcessing, resultFile: !!resultFile, danger });
-      }
-    }, 5000); // 5秒
-
-    // APIレスポンスを定期的にチェック
-    const checkCompletion = setInterval(() => {
-      const { resultFile, danger, isProcessing } = useAnalysisStore.getState();
-      console.log('ConnectingScreen: Interval check at', new Date().toISOString(), {
-        resultFile: !!resultFile,
-        danger,
-        isProcessing,
-        isMinDurationElapsed: isMinDurationElapsed.current
-      });
-      if (isMinDurationElapsed.current && !isProcessing && resultFile && danger !== null) {
-        console.log('ConnectingScreen: Conditions met in interval, calling handleFirstScreenClick');
-        clearInterval(checkCompletion);
-        handleFirstScreenClick();
-      }
-    }, 200); // 0.2秒ごとにチェック
-
     // クリーンアップ
     return () => {
-      console.log('ConnectingScreen: Cleanup at', new Date().toISOString());
+      console.log('ConnectingScreen: クリーンアップ', new Date().toISOString());
       tl.kill();
-      if (timerRef.current) clearTimeout(timerRef.current);
-      clearInterval(checkCompletion);
     };
-  }, [handleFirstScreenClick]);
+  }, []);
 
   return (
     <div ref={containerRef} className="fixed top-0 z-50 w-screen h-dvh">
       <BackgroundController>
         <div
           className="inset-0 flex flex-col items-center justify-center"
-          onClick={() => console.log('ConnectingScreen: Clicked, but not triggering handleFirstScreenClick')}
+          onClick={() => console.log('ConnectingScreen: クリックされたが、アクションなし')}
         >
           <img
             ref={logoRef}

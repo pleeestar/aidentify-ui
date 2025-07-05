@@ -19,18 +19,20 @@ import { useAnalysisStore, getAnalysisStoreActions } from '@/stores/useAnalysisS
 export default function HomeScence() {
   const textRef = useRef<HTMLHeadingElement>(null);
   const iconRef = useRef<HTMLDivElement>(null);
+  const connectingScreenRef = useRef<HTMLDivElement>(null); // ConnectingScreen用のRef
 
-  console.log('HomeScence: Before useAnalysisStore');
+  console.log('HomeScence: useAnalysisStoreの前');
   const file = useAnalysisStore((state) => state.file);
   const resultFile = useAnalysisStore((state) => state.resultFile);
   const danger = useAnalysisStore((state) => state.danger);
   const scene = useAnalysisStore((state) => state.scene);
   const isProcessing = useAnalysisStore((state) => state.isProcessing);
-  console.log('HomeScence: After useAnalysisStore', { file, resultFile, danger, scene, isProcessing });
+  console.log('HomeScence: useAnalysisStoreの後', { file, resultFile, danger, scene, isProcessing });
 
   const [showFirstScreen, setShowFirstScreen] = useState(false);
   const [showSecondScreen, setShowSecondScreen] = useState(false);
 
+  // ヘッダーのテキストアニメーション
   useEffect(() => {
     const texts = [
       '個人情報を保護',
@@ -65,25 +67,43 @@ export default function HomeScence() {
     return () => clearInterval(interval);
   }, []);
 
+  // ConnectingScreenのopacityアニメーション
+  useEffect(() => {
+    if (connectingScreenRef.current) {
+      if (showFirstScreen) {
+        gsap.fromTo(
+          connectingScreenRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.5, ease: 'power2.out' }
+        );
+      } else {
+        gsap.to(connectingScreenRef.current, {
+          opacity: 0,
+          duration: 0.5,
+          ease: 'power2.in',
+        });
+      }
+    }
+  }, [showFirstScreen]);
+
   const handlePlay = () => {
-    console.log('HomeScence: handlePlay called');
-    const { setIsProcessing } = getAnalysisStoreActions();
-    setIsProcessing(true); // 処理開始をマーク
-    setShowFirstScreen(true);
+    console.log('HomeScence: handlePlay 呼び出し');
+    setShowFirstScreen(true); // ConnectingScreenをopacityアニメーションで表示
   };
 
   const handleFirstScreenComplete = () => {
-    console.log('HomeScence: handleFirstScreenComplete called', { resultFile, danger });
-    const { setIsProcessing } = getAnalysisStoreActions();
-    setShowFirstScreen(false);
-    setIsProcessing(false); // 処理終了をマーク
+    console.log('HomeScence: handleFirstScreenComplete 呼び出し', { resultFile, danger });
+    setShowFirstScreen(false); // ConnectingScreenを非表示
     if (resultFile && danger !== null) {
-      setShowSecondScreen(true);
+      setShowSecondScreen(true); // ResultDisplayを表示
+    } else {
+      console.warn('HomeScence: resultFileまたはdangerが未設定、HomeScenceに留まる');
+      alert('分析結果を取得できませんでした。もう一度お試しください。');
     }
   };
 
   const handleCloseSecondScreen = () => {
-    console.log('HomeScence: handleCloseSecondScreen called');
+    console.log('HomeScence: handleCloseSecondScreen 呼び出し');
     const { setFile, setScene, setResult } = getAnalysisStoreActions();
     setShowSecondScreen(false);
     setFile(null);
@@ -96,23 +116,44 @@ export default function HomeScence() {
       <h1 className="text-4xl font-bold mb-4 text-[#222] text-left w-full">＝ Home</h1>
       <img src="/aidentify.svg" alt="Aidentify #3.0.1" className="mb-4 w-full" />
 
-      {file && !showFirstScreen && !showSecondScreen && (
-        <ImageInteractionManager
-          uploadedFile={file}
-          onClose={() => {
-            console.log('HomeScence: ImageInteractionManager onClose');
-            const { setFile } = getAnalysisStoreActions();
-            setFile(null);
-          }}
-          onPlay={handlePlay}
-        />
+      {/* fileが存在する場合、ImageInteractionManagerを常にレンダリングし、CSSで表示/非表示を制御 */}
+      {file && (
+        <div
+          className={`w-full h-full absolute top-0 left-0 transition-opacity duration-300 ${
+            showFirstScreen || showSecondScreen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <ImageInteractionManager
+            uploadedFile={file}
+            onClose={() => {
+              console.log('HomeScence: ImageInteractionManager onClose');
+              const { setFile } = getAnalysisStoreActions();
+              setFile(null);
+            }}
+            onPlay={handlePlay}
+            onComplete={handleFirstScreenComplete} // 新たに追加
+          />
+        </div>
       )}
 
-      {showFirstScreen && (
-        <ConnectingScreen handleFirstScreenClick={handleFirstScreenComplete} />
+      {/* ConnectingScreenをopacityアニメーションで表示 */}
+      {file && (
+        <div
+          ref={connectingScreenRef}
+          className={`w-full h-full absolute top-0 left-0 transition-opacity duration-300 ${
+            showFirstScreen ? 'opacity-100 z-20' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <ConnectingScreen />
+        </div>
       )}
 
-      {showSecondScreen && resultFile && danger !== null && <ResultDisplay />}
+      {/* ResultDisplay */}
+      {showSecondScreen && resultFile && danger !== null && (
+        <div className="w-full h-full absolute top-0 left-0 z-30">
+          <ResultDisplay onClose={handleCloseSecondScreen} />
+        </div>
+      )}
 
       <div className="flex items-center space-x-4 mb-8">
         <div ref={iconRef}>
