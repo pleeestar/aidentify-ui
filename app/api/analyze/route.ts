@@ -1,5 +1,3 @@
-// path: /app/api/route.ts
-
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
@@ -7,7 +5,7 @@ import path from 'path';
 // Python AIサーバーのエンドポイント
 const AI_SERVER_URL = 'https://rein0421-aidentify.hf.space/analyze';
 // デバッグ用のダミーレスポンスを有効化するかどうか
-const USE_DUMMY_RESPONSE = false;
+const USE_DUMMY_RESPONSE = true;
 // テスト用のダミーレスポンスの種類
 const DUMMY_RESPONSE_TYPE: 'random' | 'fixed' | 'error' = 'random';
 
@@ -30,7 +28,7 @@ export async function POST(request: Request) {
     const risk_level = formData.get('risk_level') as string | null;
     const rect = formData.get('rect') as string | null;
 
-    // デバッグ用ログ
+    // デバッグ用ログ（受信データ）
     console.log('受信データ:', { file: file?.name, scene, mode, risk_level, rect });
 
     // 必須フィールドのバリデーション
@@ -38,6 +36,23 @@ export async function POST(request: Request) {
       console.error('必須フィールドが不足:', { file: !!file, scene, mode });
       return new NextResponse('必須フィールドが不足: file, scene, または mode', { status: 400 });
     }
+
+    // 新しい FormData を作成して、必要なフィールドを確実に含める
+    const newFormData = new FormData();
+    newFormData.append('file', file);
+    newFormData.append('scene', scene);
+    newFormData.append('mode', mode);
+    newFormData.append('risk_level', risk_level || '50');
+    newFormData.append('rect', rect || '{}'); // rect が null の場合、空の JSON 文字列
+
+    // 送信データのログ出力
+    console.log('送信データ:', {
+      file: file?.name,
+      scene,
+      mode,
+      risk_level: risk_level || '50',
+      rect: rect || '{}',
+    });
 
     // デバッグモード（ダミーレスポンス）が有効な場合
     if (USE_DUMMY_RESPONSE) {
@@ -75,9 +90,9 @@ export async function POST(request: Request) {
     // Python AIサーバーにリクエストを転送
     const aiResponse = await fetch(AI_SERVER_URL, {
       method: 'POST',
-      body: formData, // FormDataをそのまま転送
+      body: newFormData, // 新しい FormData を使用
       headers: {
-        // FormDataを使用する場合、Content-Typeは自動設定されるため明示的に設定しない
+        // FormData を使用する場合、Content-Type は自動設定されるため明示的に設定しない
       },
     });
 
