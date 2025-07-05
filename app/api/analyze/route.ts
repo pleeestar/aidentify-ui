@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Python AIサーバーのエンドポイント
-const AI_SERVER_URL = 'https://rein0421-aidentify.hf.space/analyze';
+const AI_SERVER_URL = 'https://rein0421-aidentify.hf.space/create-mask-and-inpaint-sum-llm-simple';
 // デバッグ用のダミーレスポンスを有効化するかどうか
 const USE_DUMMY_RESPONSE = false;
 // テスト用のダミーレスポンスの種類
